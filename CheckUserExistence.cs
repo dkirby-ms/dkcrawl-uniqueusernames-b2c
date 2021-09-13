@@ -17,6 +17,7 @@ using MyProject.Settings;
 
 namespace MyProject.Function
 {
+    
     public class CheckUserExistence
     {
         private readonly AdminConfiguration adminSettings;
@@ -56,13 +57,11 @@ namespace MyProject.Function
                 return new OkObjectResult(new ResponseContent("ShowBlockPage", "There was a problem with your request."));
             }
 
-            // If email claim not found, show block page
-            if (string.IsNullOrEmpty(adUser.Email) || !adUser.Email.Contains("@"))
+            // If crawl handle claim not found, show block page
+            if (string.IsNullOrEmpty(adUser.Crawlhandle))
             {
                 return new BadRequestObjectResult(new ResponseContent("ShowBlockPage", "Email name is mandatory."));
             }
-
-            string userEmail = adUser.Email;
 
             // Initialize the client credential auth provider
             IConfidentialClientApplication confidentialClientApplication = ConfidentialClientApplicationBuilder
@@ -75,23 +74,22 @@ namespace MyProject.Function
             // Set up the Microsoft Graph service client with client credentials
             GraphServiceClient graphClient = new GraphServiceClient(authProvider);
 
+            // Grab the custom attribute name of the Crawlhandle user attribute in B2C app
+            const string crawlhandle = "Crawlhandle";
+            B2cCustomAttributeHelper helper = new B2cCustomAttributeHelper(applicationId);
+            string crawlhandleAttributeName = helper.GetCompleteAttributeName(crawlhandle);
             try
             {
-                // Get user by sign-in name
-                var result = (await graphClient.Users
+                // Get any users who match the user name
+                var result = await graphClient.Users
                     .Request()
-                    .Filter($"identities/any(c:c/issuerAssignedId eq '{userEmail}' and c/issuer eq '{tenantId}')")
-                    .GetAsync())
-                    .Union(
-                        await graphClient.Users
-                        .Request()
-                        .Filter($"otherMails/any(c:c eq '{userEmail}') and UserType eq 'Member'")
-                        .GetAsync()
-                    ).ToArray();
+                    .Select($"id,{crawlhandleAttributeName}")
+                    .Filter($"eq({crawlhandleAttributeName.ToLower()},{adUser.Crawlhandle.ToLower()})")
+                    .GetAsync();
 
-                if (result.Length > 0)
+                if (result.Count > 0)
                 {
-                    return new BadRequestObjectResult(new ResponseContent("ValidationError", "An user with this email already exists.", "400"));
+                    return new BadRequestObjectResult(new ResponseContent("ValidationError", "A user with this name handle already exists.", "400"));
                 }
             }
             catch (Exception e)
@@ -103,5 +101,6 @@ namespace MyProject.Function
             // If all is OK, return 200 OK - Continue message
             return new OkObjectResult(new ResponseContent("Continue"));
         }
+        
     }
 }

@@ -8,6 +8,7 @@ namespace MyProject.Shared.ViewModels
     using System.Globalization;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
+    using MyProject.Function;
 
     public class AdUserViewModel
     {
@@ -40,6 +41,9 @@ namespace MyProject.Shared.ViewModels
 
         [JsonProperty("ui_locales")]
         public string UiLocales { get; set; }
+
+        [JsonProperty("extension_c468b28b65e24416a1bf7c959a603337_Crawlhandle")]
+        public string Crawlhandle { get; set;}
     }
 
 }
