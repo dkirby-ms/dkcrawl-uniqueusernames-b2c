@@ -60,7 +60,7 @@ namespace MyProject.Function
             // If crawl handle claim not found, show block page
             if (string.IsNullOrEmpty(adUser.Crawlhandle))
             {
-                return new BadRequestObjectResult(new ResponseContent("ShowBlockPage", "Email name is mandatory."));
+                return new BadRequestObjectResult(new ResponseContent("ShowBlockPage", requestBody));
             }
 
             // Initialize the client credential auth provider
