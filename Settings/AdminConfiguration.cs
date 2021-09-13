@@ -5,5 +5,6 @@ namespace MyProject.Settings
         public string ApplicationId { get; set; }
         public string ClientSecret { get; set; }
         public string TenantId { get; set; }
+        public string ExtensionsAppId { get; set; }
     }
 }

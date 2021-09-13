@@ -35,10 +35,9 @@ namespace MyProject.Function
             ILogger log)
         {
             log.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
-
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             var adUser = JsonConvert.DeserializeObject<AdUserViewModel>(requestBody);
-
+            log.LogInformation("Request body: " + requestBody);
             // If input data is null, show block page
             if (adUser == null)
             {
@@ -76,15 +75,16 @@ namespace MyProject.Function
 
             // Grab the custom attribute name of the Crawlhandle user attribute in B2C app
             const string crawlhandle = "Crawlhandle";
-            B2cCustomAttributeHelper helper = new B2cCustomAttributeHelper(applicationId);
+            B2cCustomAttributeHelper helper = new B2cCustomAttributeHelper(adminSettings.ExtensionsAppId);
             string crawlhandleAttributeName = helper.GetCompleteAttributeName(crawlhandle);
+            string userhandle = adUser.Crawlhandle.Trim().ToLower();
             try
             {
-                // Get any users who match the user name
+                // Check for existing users with the same crawlhandle
                 var result = await graphClient.Users
                     .Request()
-                    .Select($"id,{crawlhandleAttributeName}")
-                    .Filter($"eq({crawlhandleAttributeName.ToLower()},{adUser.Crawlhandle.ToLower()})")
+                    .Select($"id")
+                    .Filter($"{crawlhandleAttributeName} eq '{userhandle}'")
                     .GetAsync();
 
                 if (result.Count > 0)
@@ -102,5 +102,24 @@ namespace MyProject.Function
             return new OkObjectResult(new ResponseContent("Continue"));
         }
         
+    }
+    public class B2cCustomAttributeHelper
+    {
+        internal readonly string _b2cExtensionAppClientId;
+
+        internal B2cCustomAttributeHelper(string b2cExtensionAppClientId)
+        {
+            _b2cExtensionAppClientId = b2cExtensionAppClientId.Replace("-", "");
+        }
+
+        internal string GetCompleteAttributeName(string attributeName)
+        {
+            if (string.IsNullOrWhiteSpace(attributeName))
+            {
+                throw new System.ArgumentException("Parameter cannot be null", nameof(attributeName));
+            }
+
+            return $"extension_{_b2cExtensionAppClientId}_{attributeName}";
+        }
     }
 }

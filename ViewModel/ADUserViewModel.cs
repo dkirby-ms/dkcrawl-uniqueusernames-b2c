@@ -43,7 +43,7 @@ namespace MyProject.Shared.ViewModels
         public string UiLocales { get; set; }
 
         [JsonProperty("extension_d01cbca878394a04affb450b048d7f83_Crawlhandle")]
-        public string Crawlhandle { get; set;}
+        public string Crawlhandle { get; set; }
     }
 
 }
